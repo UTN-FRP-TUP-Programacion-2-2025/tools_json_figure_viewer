@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Objetos 3D/2D</title>
+    <link rel="stylesheet" href="css/figurerender.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Visualizador de Objetos 3D/2D</h1>
+            <div class="upload-section">
+                <input type="file" id="jsonFile" class="file-input" accept=".json">
+                <button class="upload-btn" onclick="document.getElementById('jsonFile').click()">
+                    📁 Cargar JSON
+                </button>
+                <button class="upload-btn" onclick="loadExampleData()">
+                    📋 Cargar Ejemplo
+                </button>
+            </div>
+        </div>
+
+        <div class="tree-panel">
+            <div class="panel-title">🌳 Estructura del JSON</div>
+            <div class="json-input-section">
+                <textarea 
+                    id="jsonTextarea" 
+                    class="json-textarea" 
+                    placeholder="Pega tu JSON aquí o escribe directamente..."
+                ></textarea>
+            </div>
+            <div id="jsonTree"></div>
+        </div>
+
+        <div class="view3d-panel">
+            <div class="panel-title">🎯 Vista 3D</div>
+            <div class="controls">
+                <button class="control-btn active" onclick="setViewMode('all')">Todos</button>
+                <button class="control-btn" onclick="setViewMode('3d')">Solo 3D</button>
+                <button class="control-btn" onclick="setViewMode('2d')">Solo 2D</button>
+            </div>
+            <div id="view3d-container"></div>
+            <div class="stats" id="stats3d"></div>
+        </div>
+
+        <div class="view2d-panel">
+            <div class="panel-title">📐 Vista 2D</div>
+            <div class="controls">
+                <button class="control-btn" onclick="setCanvasMode('wireframe')">Wireframe</button>
+                <button class="control-btn active" onclick="setCanvasMode('filled')">Relleno</button>
+                <button class="control-btn" onclick="setCanvasMode('outline')">Contorno</button>
+            </div>
+            <div id="view2d-container"></div>
+            <div class="stats" id="stats2d"></div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div>🔄 Cargando visualización...</div>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <script src="js/figurerender.js"></script>
+</body>
+</html> 

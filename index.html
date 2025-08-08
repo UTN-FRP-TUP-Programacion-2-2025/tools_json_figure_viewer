@@ -3,65 +3,546 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Objetos 3D/2D</title>
-    <link rel="stylesheet" href="css/figurerender.css">
+    <title>Visor JSON 3D - Cilindro</title>
+    <!-- Bootstrap 4.3.1 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .json-tree {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .json-node {
+            margin: 0.25rem 0;
+            padding-left: 1rem;
+        }
+        
+        .json-key {
+            color: #0066cc;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .json-key:hover {
+            background-color: #e3f2fd;
+            border-radius: 3px;
+        }
+        
+        .json-value {
+            color: #006600;
+            margin-left: 0.5rem;
+        }
+        
+        .json-string {
+            color: #cc6600;
+        }
+        
+        .json-number {
+            color: #0066cc;
+        }
+        
+        .json-children {
+            margin-left: 1rem;
+            border-left: 2px solid #e0e0e0;
+            padding-left: 0.5rem;
+        }
+        
+        .json-children.collapsed {
+            display: none;
+        }
+        
+        .expand-icon {
+            margin-right: 0.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .expand-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        #canvas-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0.5rem;
+            position: relative;
+            height: 500px;
+        }
+        
+        #canvas-3d {
+            border-radius: 0.5rem;
+        }
+        
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .info-panel {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .btn-parse {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+        }
+        
+        .btn-parse:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔄 Visualizador de Objetos 3D/2D</h1>
-            <div class="upload-section">
-                <input type="file" id="jsonFile" class="file-input" accept=".json">
-                <button class="upload-btn" onclick="document.getElementById('jsonFile').click()">
-                    📁 Cargar JSON
-                </button>
-                <button class="upload-btn" onclick="loadExampleData()">
-                    📋 Cargar Ejemplo
-                </button>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-cube text-primary"></i>
+                    Visor JSON 3D - Cilindro Interactivo
+                </h1>
             </div>
         </div>
-
-        <div class="tree-panel">
-            <div class="panel-title">🌳 Estructura del JSON</div>
-            <div class="json-input-section">
-                <textarea 
-                    id="jsonTextarea" 
-                    class="json-textarea" 
-                    placeholder="Pega tu JSON aquí o escribe directamente..."
-                ></textarea>
+        
+        <div class="row">
+            <!-- Panel de entrada JSON -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-code"></i> Entrada JSON</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="jsonInput" class="form-control mb-3" rows="10" placeholder="Pega aquí tu JSON del cilindro...">
+{
+  "Tipo": "Cilindro",
+  "Tapas": [
+    {
+      "Tipo": "Circulo",
+      "Radio": 3.00,
+      "Area": 28.27
+    },
+    {
+      "Tipo": "Circulo", 
+      "Radio": 3.00,
+      "Area": 28.27
+    }
+  ],
+  "Lado": {
+    "Tipo": "RectanguloDesarrollado",
+    "Lago": 3.00,
+    "Ancho": 18.85,
+    "Area": 56.55
+  },
+  "Area": 113.10,
+  "Volumen": 84.82
+}</textarea>
+                        <button id="parseBtn" class="btn btn-parse btn-lg btn-block">
+                            <i class="fas fa-play"></i> Procesar JSON
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Panel de árbol JSON -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sitemap"></i> Estructura Jerárquica</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="jsonTree" class="json-tree">
+                            <em class="text-muted">Procesa un JSON para ver la estructura aquí...</em>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="jsonTree"></div>
-        </div>
-
-        <div class="view3d-panel">
-            <div class="panel-title">🎯 Vista 3D</div>
-            <div class="controls">
-                <button class="control-btn active" onclick="setViewMode('all')">Todos</button>
-                <button class="control-btn" onclick="setViewMode('3d')">Solo 3D</button>
-                <button class="control-btn" onclick="setViewMode('2d')">Solo 2D</button>
+            
+            <!-- Panel de visualización 3D -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cube"></i> Visualización 3D</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="canvas-container">
+                            <canvas id="canvas-3d"></canvas>
+                        </div>
+                        
+                        <div class="controls-panel">
+                            <h6><i class="fas fa-cogs"></i> Controles</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>Radio: <span id="radiusValue">3.0</span></label>
+                                    <input type="range" class="form-control-range" id="radiusSlider" min="1" max="10" step="0.1" value="3">
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Altura: <span id="heightValue">3.0</span></label>
+                                    <input type="range" class="form-control-range" id="heightSlider" min="1" max="10" step="0.1" value="3">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button id="resetView" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-refresh"></i> Restablecer Vista
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="info-panel">
+                            <h6><i class="fas fa-info-circle"></i> Información del Objeto</h6>
+                            <div id="objectInfo">
+                                <em class="text-muted">Procesa un JSON para ver información aquí...</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="view3d-container"></div>
-            <div class="stats" id="stats3d"></div>
-        </div>
-
-        <div class="view2d-panel">
-            <div class="panel-title">📐 Vista 2D</div>
-            <div class="controls">
-                <button class="control-btn" onclick="setCanvasMode('wireframe')">Wireframe</button>
-                <button class="control-btn active" onclick="setCanvasMode('filled')">Relleno</button>
-                <button class="control-btn" onclick="setCanvasMode('outline')">Contorno</button>
-            </div>
-            <div id="view2d-container"></div>
-            <div class="stats" id="stats2d"></div>
         </div>
     </div>
 
-    <div class="loading" id="loading">
-        <div>🔄 Cargando visualización...</div>
-    </div>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Bootstrap 4.3.1 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
-    <div class="error" id="error"></div>
-
-    <script src="js/figurerender.js"></script>
+    <script>
+        // Variables globales para Three.js
+        let scene, camera, renderer, cylinder, controls;
+        let isMouseDown = false, mouseX = 0, mouseY = 0;
+        let rotationX = 0, rotationY = 0;
+        
+        // Inicializar aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            setupEventListeners();
+            // Procesar JSON inicial
+            document.getElementById('parseBtn').click();
+        });
+        
+        function setupEventListeners() {
+            document.getElementById('parseBtn').addEventListener('click', processJSON);
+            document.getElementById('radiusSlider').addEventListener('input', updateCylinder);
+            document.getElementById('heightSlider').addEventListener('input', updateCylinder);
+            document.getElementById('resetView').addEventListener('click', resetView);
+            
+            // Controles de mouse para rotación
+            const canvas = document.getElementById('canvas-3d');
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('wheel', onWheel);
+        }
+        
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const canvas = document.getElementById('canvas-3d');
+            
+            // Configurar escena
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x2c3e50);
+            
+            // Configurar cámara
+            camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+            camera.position.set(8, 5, 8);
+            camera.lookAt(0, 0, 0);
+            
+            // Configurar renderer
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Iluminación
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0x4fc3f7, 0.5, 100);
+            pointLight.position.set(-10, 0, 0);
+            scene.add(pointLight);
+            
+            // Crear cilindro inicial
+            createCylinder(3, 3);
+            
+            // Iniciar render loop
+            animate();
+        }
+        
+        function createCylinder(radius, height) {
+            // Remover cilindro existente
+            if (cylinder) {
+                scene.remove(cylinder);
+            }
+            
+            // Crear grupo para el cilindro
+            cylinder = new THREE.Group();
+            
+            // Geometría del cilindro
+            const geometry = new THREE.CylinderGeometry(radius, radius, height, 32);
+            
+            // Material principal
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x3498db,
+                transparent: true,
+                opacity: 0.8,
+                shininess: 100
+            });
+            
+            const cylinderMesh = new THREE.Mesh(geometry, material);
+            cylinderMesh.castShadow = true;
+            cylinderMesh.receiveShadow = true;
+            
+            // Wireframe para mejor visualización
+            const wireframe = new THREE.WireframeGeometry(geometry);
+            const line = new THREE.LineSegments(wireframe, new THREE.LineBasicMaterial({ color: 0x2c3e50 }));
+            
+            cylinder.add(cylinderMesh);
+            cylinder.add(line);
+            
+            // Añadir ejes de referencia
+            const axesHelper = new THREE.AxesHelper(radius * 1.5);
+            cylinder.add(axesHelper);
+            
+            scene.add(cylinder);
+        }
+        
+        function processJSON() {
+            const jsonText = document.getElementById('jsonInput').value;
+            
+            try {
+                const jsonData = JSON.parse(jsonText);
+                
+                // Crear árbol jerárquico
+                createJSONTree(jsonData);
+                
+                // Actualizar información del objeto
+                updateObjectInfo(jsonData);
+                
+                // Actualizar visualización 3D si es un cilindro
+                if (jsonData.Tipo === "Cilindro") {
+                    const radius = jsonData.Tapas && jsonData.Tapas[0] ? jsonData.Tapas[0].Radio : 3;
+                    const height = jsonData.Lado ? jsonData.Lado.Lago : 3;
+                    
+                    document.getElementById('radiusSlider').value = radius;
+                    document.getElementById('heightSlider').value = height;
+                    document.getElementById('radiusValue').textContent = radius.toFixed(1);
+                    document.getElementById('heightValue').textContent = height.toFixed(1);
+                    
+                    createCylinder(radius, height);
+                }
+                
+            } catch (error) {
+                alert('Error al procesar JSON: ' + error.message);
+            }
+        }
+        
+        function createJSONTree(data) {
+            const container = document.getElementById('jsonTree');
+            container.innerHTML = '';
+            
+            const rootNode = createJSONNode('JSON', data, 0);
+            container.appendChild(rootNode);
+        }
+        
+        function createJSONNode(key, value, level) {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = 'json-node';
+            
+            if (typeof value === 'object' && value !== null) {
+                // Crear nodo expandible
+                const keySpan = document.createElement('span');
+                keySpan.className = 'json-key';
+                
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-chevron-down expand-icon';
+                
+                const keyText = document.createElement('span');
+                keyText.textContent = key;
+                
+                const typeInfo = document.createElement('span');
+                typeInfo.className = 'json-value';
+                typeInfo.textContent = Array.isArray(value) ? ` [${value.length}]` : ' {}';
+                
+                keySpan.appendChild(icon);
+                keySpan.appendChild(keyText);
+                keySpan.appendChild(typeInfo);
+                
+                const childrenDiv = document.createElement('div');
+                childrenDiv.className = 'json-children';
+                
+                // Crear nodos hijos
+                if (Array.isArray(value)) {
+                    value.forEach((item, index) => {
+                        const childNode = createJSONNode(`[${index}]`, item, level + 1);
+                        childrenDiv.appendChild(childNode);
+                    });
+                } else {
+                    Object.keys(value).forEach(childKey => {
+                        const childNode = createJSONNode(childKey, value[childKey], level + 1);
+                        childrenDiv.appendChild(childNode);
+                    });
+                }
+                
+                // Event listener para colapsar/expandir
+                keySpan.addEventListener('click', function() {
+                    const isCollapsed = childrenDiv.classList.contains('collapsed');
+                    childrenDiv.classList.toggle('collapsed');
+                    icon.classList.toggle('collapsed');
+                });
+                
+                nodeDiv.appendChild(keySpan);
+                nodeDiv.appendChild(childrenDiv);
+                
+            } else {
+                // Nodo hoja
+                const keySpan = document.createElement('span');
+                keySpan.className = 'json-key';
+                keySpan.textContent = key + ':';
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'json-value';
+                
+                if (typeof value === 'string') {
+                    valueSpan.className += ' json-string';
+                    valueSpan.textContent = `"${value}"`;
+                } else if (typeof value === 'number') {
+                    valueSpan.className += ' json-number';
+                    valueSpan.textContent = value;
+                } else {
+                    valueSpan.textContent = String(value);
+                }
+                
+                nodeDiv.appendChild(keySpan);
+                nodeDiv.appendChild(valueSpan);
+            }
+            
+            return nodeDiv;
+        }
+        
+        function updateObjectInfo(data) {
+            const infoDiv = document.getElementById('objectInfo');
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Tipo:</strong> ${data.Tipo || 'N/A'}<br>
+                        <strong>Área Total:</strong> ${data.Area || 'N/A'}<br>
+                        <strong>Volumen:</strong> ${data.Volumen || 'N/A'}
+                    </div>
+                    <div class="col-md-6">
+            `;
+            
+            if (data.Tapas && data.Tapas.length > 0) {
+                html += `<strong>Tapas:</strong> ${data.Tapas.length}<br>`;
+                html += `<strong>Radio:</strong> ${data.Tapas[0].Radio || 'N/A'}<br>`;
+            }
+            
+            if (data.Lado) {
+                html += `<strong>Altura:</strong> ${data.Lado.Lago || 'N/A'}<br>`;
+            }
+            
+            html += '</div></div>';
+            infoDiv.innerHTML = html;
+        }
+        
+        function updateCylinder() {
+            const radius = parseFloat(document.getElementById('radiusSlider').value);
+            const height = parseFloat(document.getElementById('heightSlider').value);
+            
+            document.getElementById('radiusValue').textContent = radius.toFixed(1);
+            document.getElementById('heightValue').textContent = height.toFixed(1);
+            
+            createCylinder(radius, height);
+        }
+        
+        function resetView() {
+            camera.position.set(8, 5, 8);
+            camera.lookAt(0, 0, 0);
+            rotationX = 0;
+            rotationY = 0;
+            if (cylinder) {
+                cylinder.rotation.x = 0;
+                cylinder.rotation.y = 0;
+            }
+        }
+        
+        // Controles de mouse
+        function onMouseDown(event) {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+        
+        function onMouseMove(event) {
+            if (!isMouseDown || !cylinder) return;
+            
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            rotationY += deltaX * 0.01;
+            rotationX += deltaY * 0.01;
+            
+            cylinder.rotation.x = rotationX;
+            cylinder.rotation.y = rotationY;
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+        
+        function onMouseUp() {
+            isMouseDown = false;
+        }
+        
+        function onWheel(event) {
+            event.preventDefault();
+            const scale = event.deltaY > 0 ? 1.1 : 0.9;
+            camera.position.multiplyScalar(scale);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotación automática sutil
+            if (cylinder && !isMouseDown) {
+                cylinder.rotation.y += 0.005;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Responsive
+        window.addEventListener('resize', function() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.offsetWidth / container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+        });
+    </script>
 </body>
-</html> 
+</html>

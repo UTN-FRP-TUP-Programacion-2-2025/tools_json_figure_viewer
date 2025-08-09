@@ -200,6 +200,7 @@ function createPlaneShape(type, width, height, position = { x: 0, y: 0, z: 0 }, 
     return group;
 }
 
+/*
 function getRandomPosition(existingPositions, objectSize) {
     const maxAttempts = 100;
     let attempts = 0;
@@ -231,6 +232,48 @@ function getRandomPosition(existingPositions, objectSize) {
         x: (Math.random() - 0.5) * 40,
         z: (Math.random() - 0.5) * 40,
         size: objectSize
+    };
+}
+*/
+function getRandomPosition(existingPositions, newObjectSize) {
+    const maxAttempts = 100;
+    const padding = 2; // Margen de seguridad entre objetos
+    
+    for (let i = 0; i < maxAttempts; i++) {
+        // Genera una posición aleatoria dentro de un rango más amplio
+        const x = (Math.random() - 0.5) * 40; 
+        const z = (Math.random() - 0.5) * 40;
+        
+        let collision = false;
+        for (const existingPos of existingPositions) {
+            // Calcula la distancia entre los centros
+            const distance = Math.sqrt(
+                (x - existingPos.x) ** 2 + 
+                (z - existingPos.z) ** 2
+            );
+            
+            // La distancia mínima debe ser la suma de la mitad del tamaño de cada objeto
+            const minDistance = (existingPos.size / 2) + (newObjectSize / 2) + padding;
+            
+            if (distance < minDistance) {
+                collision = true;
+                break;
+            }
+        }
+        
+        if (!collision) {
+            // Si no hay colisión, devuelve la posición encontrada
+            return { x, z, size: newObjectSize };
+        }
+    }
+    
+    // Si no se encuentra una posición sin colisión después de muchos intentos
+    // devuelva una posición aleatoria y advierte de una posible superposición.
+    console.warn("No se pudo encontrar una posición sin colisión. Los objetos pueden superponerse.");
+    return {
+        x: (Math.random() - 0.5) * 40,
+        z: (Math.random() - 0.5) * 40,
+        size: newObjectSize
     };
 }
 
@@ -268,6 +311,7 @@ function updateCameraPosition() {
     camera.position.set(x, y, z);
     camera.lookAt(objectsCenter.x, objectsCenter.y, objectsCenter.z);
 }
+
 
 function processJSON() {
     let jsonText = document.getElementById('jsonInput').value;
@@ -313,6 +357,7 @@ function processJSON() {
     }
 }
 
+
 function cleanJSON(jsonStr) {
     // Eliminar comentarios de una línea (// ...)
     jsonStr = jsonStr.replace(/\/\/.*$/gm, '');
@@ -336,6 +381,7 @@ function clearScene() {
     objects = [];
 }
 
+/*
 function processObjectArray(dataArray) {
     const positions = [];
     
@@ -346,7 +392,7 @@ function processObjectArray(dataArray) {
         if (objData.Tipo === 'Cilindro' && objData.Tapas && objData.Tapas[0]) {
             objectSize = objData.Tapas[0].Radio * 2;
         } else if (objData.Tipo === 'Cubo' && objData.Caras && objData.Caras[0]) {
-            objectSize = objData.Caras[0].Lago;
+            objectSize = objData.Caras[0].Largo;
         } else if (objData.Tipo === 'Ortoedro' && objData.Tapas && objData.Tapas[0]) {
             objectSize = Math.max(objData.Tapas[0].Largo, objData.Tapas[0].Ancho);
         }
@@ -365,6 +411,53 @@ function processObjectArray(dataArray) {
     calculateObjectsCenter();
     updateCameraPosition();
 }
+*/
+
+function processObjectArray(dataArray) {
+    const positions = [];
+    
+    dataArray.forEach((objData, index) => {
+        let objectSize;
+        
+        // Calcular el tamaño aproximado del objeto para la detección de colisiones
+        // Se toma la dimensión más grande para asegurar un margen suficiente
+        switch (objData.Tipo) {
+            case 'Cilindro':
+                objectSize = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Radio * 2 : 5;
+                break;
+            case 'Cubo':
+                // Nota: Usar 'Largo' como la longitud del lado, como en tu código
+                objectSize = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Largo : 5;
+                break;
+            case 'Ortoedro':
+                objectSize = (objData.Tapas && objData.Tapas[0]) ? Math.max(objData.Tapas[0].Largo, objData.Tapas[0].Ancho) : 5;
+                break;
+            case 'Rectangulo':
+                objectSize = objData.Largo ? Math.max(objData.Largo, objData.Ancho) : 5;
+                break;
+            case 'Cuadrado':
+                objectSize = objData.Largo || 5;
+                break;
+            case 'Circulo':
+                objectSize = objData.Radio ? objData.Radio * 2 : 5;
+                break;
+            default:
+                objectSize = 5; // Tamaño por defecto si el tipo no coincide
+        }
+        
+        const position = getRandomPosition(positions, objectSize);
+        positions.push(position);
+        
+        const obj = create3DObject(objData, { x: position.x, y: 0, z: position.z });
+        if (obj) {
+            objects.push(obj);
+            scene.add(obj);
+        }
+    });
+    
+    calculateObjectsCenter();
+    updateCameraPosition();
+}
 
 function create3DObject(data, position) {
     const type = data.Tipo;
@@ -373,14 +466,14 @@ function create3DObject(data, position) {
         case 'Cilindro':
             if (data.Tapas && data.Tapas[0] && data.Lado) {
                 const radius = data.Tapas[0].Radio;
-                const height = data.Lado.Lago;
+                const height = data.Lado.Largo;
                 return createCylinder(radius, height, position);
             }
             break;
             
         case 'Cubo':
             if (data.Caras && data.Caras[0]) {
-                const size = data.Caras[0].Lago;
+                const size = data.Caras[0].Largo;
                 return createCube(size, position);
             }
             break;
@@ -401,8 +494,8 @@ function create3DObject(data, position) {
             break;
             
         case 'Cuadrado':
-            if (data.Lago) {
-                return createPlaneShape('Rectangulo', data.Lago, data.Lago, position, objectColors.Cuadrado);
+            if (data.Largo) {
+                return createPlaneShape('Rectangulo', data.Largo, data.Largo, position, objectColors.Cuadrado);
             }
             break;
             
@@ -536,11 +629,11 @@ function updateObjectInfo(data) {
         
         if (data.Caras && data.Caras.length > 0) {
             html += `<strong>Caras:</strong> ${data.Caras.length}<br>`;
-            html += `<strong>Lado:</strong> ${data.Caras[0].Lago || 'N/A'}<br>`;
+            html += `<strong>Lado:</strong> ${data.Caras[0].Largo || 'N/A'}<br>`;
         }
         
         if (data.Lado) {
-            html += `<strong>Altura:</strong> ${data.Lado.Lago || 'N/A'}<br>`;
+            html += `<strong>Altura:</strong> ${data.Lado.Largo || 'N/A'}<br>`;
         }
         
         html += '</div></div>';

@@ -459,6 +459,7 @@ function processObjectArray(dataArray) {
     updateCameraPosition();
 }
 
+
 function create3DObject(data, position) {
     const type = data.Tipo;
     

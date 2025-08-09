@@ -200,7 +200,7 @@ function createPlaneShape(type, width, height, position = { x: 0, y: 0, z: 0 }, 
     return group;
 }
 
-/*
+/*sol1
 function getRandomPosition(existingPositions, objectSize) {
     const maxAttempts = 100;
     let attempts = 0;
@@ -235,6 +235,8 @@ function getRandomPosition(existingPositions, objectSize) {
     };
 }
 */
+
+/*sol2
 function getRandomPosition(existingPositions, newObjectSize) {
     const maxAttempts = 100;
     const padding = 2; // Margen de seguridad entre objetos
@@ -276,6 +278,45 @@ function getRandomPosition(existingPositions, newObjectSize) {
         size: newObjectSize
     };
 }
+*/
+
+
+//sol3 - es buena - pero esta distribuida aleatoriamente
+function getRandomPosition(existingPositions, newObjectRadius, padding) {
+    const maxAttempts = 100;
+    
+    for (let i = 0; i < maxAttempts; i++) {
+        const x = (Math.random() - 0.5) * 40; 
+        const z = (Math.random() - 0.5) * 40;
+        
+        let collision = false;
+        for (const existingPos of existingPositions) {
+            const distance = Math.sqrt(
+                (x - existingPos.x) ** 2 + 
+                (z - existingPos.z) ** 2
+            );
+            
+            // La distancia mínima es la suma de los radios de ambos objetos, más el padding.
+            const minDistance = existingPos.radius + newObjectRadius + padding;
+            
+            if (distance < minDistance) {
+                collision = true;
+                break;
+            }
+        }
+        
+        if (!collision) {
+            return { x, z };
+        }
+    }
+    
+    console.warn("No se pudo encontrar una posición sin colisión después de 100 intentos.");
+    return {
+        x: (Math.random() - 0.5) * 40,
+        z: (Math.random() - 0.5) * 40,
+    };
+}
+
 
 function calculateObjectsCenter() {
     if (objects.length === 0) {
@@ -412,7 +453,7 @@ function processObjectArray(dataArray) {
     updateCameraPosition();
 }
 */
-
+/*sol1
 function processObjectArray(dataArray) {
     const positions = [];
     
@@ -458,7 +499,234 @@ function processObjectArray(dataArray) {
     calculateObjectsCenter();
     updateCameraPosition();
 }
+*/
+//sol2
 
+/*sol3
+function processObjectArray(dataArray) {
+    const positions = [];
+    const padding = 2; // Margen de seguridad entre objetos
+    
+    dataArray.forEach((objData, index) => {
+        let objectRadius; // Usaremos un radio para la detección de colisiones
+        
+        switch (objData.Tipo) {
+            case 'Cilindro':
+                // El radio de colisión es el radio del cilindro.
+                objectRadius = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Radio : 2.5;
+                break;
+            case 'Cubo':
+                // El radio de colisión es la mitad de la diagonal de la base del cubo.
+                const size = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Lago : 5;
+                objectRadius = Math.sqrt(size * size + size * size) / 2;
+                break;
+            case 'Ortoedro':
+                // El radio de colisión es la mitad de la diagonal de la base del ortoedro.
+                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
+                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                objectRadius = Math.sqrt(width * width + depth * depth) / 2;
+                break;
+            case 'Rectangulo':
+                // El radio de colisión es la mitad de la diagonal del rectángulo.
+                const rectLargo = objData.Largo || 5;
+                const rectAncho = objData.Ancho || 5;
+                objectRadius = Math.sqrt(rectLargo * rectLargo + rectAncho * rectAncho) / 2;
+                break;
+            case 'Cuadrado':
+                // Igual que el cubo, pero para una forma plana.
+                const lado = objData.Lago || 5;
+                objectRadius = Math.sqrt(lado * lado + lado * lado) / 2;
+                break;
+            case 'Circulo':
+                // El radio de colisión es el radio del círculo.
+                objectRadius = objData.Radio || 2.5;
+                break;
+            default:
+                objectRadius = 2.5; // Radio por defecto
+        }
+        
+        const position = getRandomPosition(positions, objectRadius, padding);
+        positions.push({ x: position.x, z: position.z, radius: objectRadius });
+        
+        const obj = create3DObject(objData, { x: position.x, y: 0, z: position.z });
+        if (obj) {
+            objects.push(obj);
+            scene.add(obj);
+        }
+    });
+    
+    calculateObjectsCenter();
+    updateCameraPosition();
+}
+//
+*/
+
+/*
+//sol4 - ubicarlos sobre una circunferencia
+function processObjectArray(dataArray) {
+    // Almacena objetos con su radio de envoltura
+    const objectsWithRadius = [];
+    const padding = 2; // Margen de seguridad entre objetos
+    
+    dataArray.forEach(objData => {
+        let objectRadius;
+        
+        switch (objData.Tipo) {
+            case 'Cilindro':
+                objectRadius = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Radio : 2.5;
+                break;
+            case 'Cubo':
+                const size = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Largo : 5;
+                objectRadius = Math.sqrt(size * size + size * size) / 2;
+                break;
+            case 'Ortoedro':
+                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
+                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                objectRadius = Math.sqrt(width * width + depth * depth) / 2;
+                break;
+            case 'Rectangulo':
+                const rectLargo = objData.Largo || 5;
+                const rectAncho = objData.Ancho || 5;
+                objectRadius = Math.sqrt(rectLargo * rectLargo + rectAncho * rectAncho) / 2;
+                break;
+            case 'Cuadrado':
+                const lado = objData.Largo || 5;
+                objectRadius = Math.sqrt(lado * lado + lado * lado) / 2;
+                break;
+            case 'Circulo':
+                objectRadius = objData.Radio || 2.5;
+                break;
+            default:
+                objectRadius = 2.5;
+        }
+        
+        objectsWithRadius.push({ data: objData, radius: objectRadius });
+    });
+    
+    // --- NUEVA LÓGICA DE POSICIONAMIENTO ---
+    
+    // Si hay un solo objeto, colócalo en el centro
+    if (objectsWithRadius.length === 1) {
+        const obj = create3DObject(objectsWithRadius[0].data, { x: 0, y: 0, z: 0 });
+        if (obj) {
+            objects.push(obj);
+            scene.add(obj);
+        }
+    } else if (objectsWithRadius.length > 1) {
+        let totalAngle = 0;
+        
+        for (let i = 0; i < objectsWithRadius.length; i++) {
+            const currentObject = objectsWithRadius[i];
+            const nextObject = objectsWithRadius[(i + 1) % objectsWithRadius.length];
+            
+            // Distancia mínima requerida para el siguiente objeto
+            const minDistance = currentObject.radius + nextObject.radius + padding;
+            
+            // El radio del círculo de posicionamiento será la distancia al objeto actual
+            const positionRadius = minDistance / 2;
+            
+            // Calcula la posición en el círculo
+            const x = positionRadius * Math.cos(totalAngle);
+            const z = positionRadius * Math.sin(totalAngle);
+            
+            // Crea y añade el objeto
+            const obj = create3DObject(currentObject.data, { x, y: 0, z });
+            if (obj) {
+                objects.push(obj);
+                scene.add(obj);
+            }
+            
+            // Aumenta el ángulo para el siguiente objeto, basándote en la distancia
+            const angleIncrement = Math.acos(1 - (minDistance * minDistance) / (2 * positionRadius * positionRadius));
+            totalAngle += angleIncrement;
+        }
+    }
+    
+    // Calcular el centro del conjunto de objetos
+    calculateObjectsCenter();
+    updateCameraPosition();
+}
+*/
+
+
+/*sol: ubicarlos sobre una circunsferencia en la que la separacion sobre uno de otro este basdada
+en el mayor radio de envoltura de cada objeto
+*/
+function processObjectArray(dataArray) {
+    // 1. Recorrer todos los objetos para calcular sus radios de envoltura
+    const objectsWithRadius = dataArray.map(objData => {
+        let objectRadius;
+        
+        switch (objData.Tipo) {
+            case 'Cilindro':
+                objectRadius = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Radio : 2.5;
+                break;
+            case 'Cubo':
+                const size = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Largo : 5;
+                objectRadius = Math.sqrt(size * size + size * size) / 2;
+                break;
+            case 'Ortoedro':
+                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
+                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                objectRadius = Math.sqrt(width * width + depth * depth) / 2;
+                break;
+            case 'Rectangulo':
+                const rectLargo = objData.Largo || 5;
+                const rectAncho = objData.Ancho || 5;
+                objectRadius = Math.sqrt(rectLargo * rectLargo + rectAncho * rectAncho) / 2;
+                break;
+            case 'Cuadrado':
+                const lado = objData.Largo || 5;
+                objectRadius = Math.sqrt(lado * lado + lado * lado) / 2;
+                break;
+            case 'Circulo':
+                objectRadius = objData.Radio || 2.5;
+                break;
+            default:
+                objectRadius = 2.5;
+        }
+        
+        return { data: objData, radius: objectRadius };
+    });
+    
+    // 2. Determinar el radio de envoltura máximo
+    const maxRadius = objectsWithRadius.reduce((max, obj) => Math.max(max, obj.radius), 0);
+    const padding = 2; // Margen de seguridad entre objetos
+    const separationDistance = (maxRadius * 2) + padding; // Distancia entre centros
+    
+    // 3. Posicionar los objetos en la circunferencia
+    clearScene(); // Asegurarse de que la escena esté limpia
+    
+    // Si hay un solo objeto, colócalo en el centro
+    if (objectsWithRadius.length === 1) {
+        const obj = create3DObject(objectsWithRadius[0].data, { x: 0, y: 0, z: 0 });
+        if (obj) {
+            objects.push(obj);
+            scene.add(obj);
+        }
+    } else if (objectsWithRadius.length > 1) {
+        // Calcular el radio de la circunferencia de posicionamiento
+        // Esto asume que los objetos se posicionan hombro con hombro
+        const circumferenceRadius = (objectsWithRadius.length * separationDistance) / (2 * Math.PI);
+        
+        for (let i = 0; i < objectsWithRadius.length; i++) {
+            const angle = (i / objectsWithRadius.length) * 2 * Math.PI;
+            
+            const x = circumferenceRadius * Math.cos(angle);
+            const z = circumferenceRadius * Math.sin(angle);
+            
+            const obj = create3DObject(objectsWithRadius[i].data, { x, y: 0, z });
+            if (obj) {
+                objects.push(obj);
+                scene.add(obj);
+            }
+        }
+    }
+    
+    // Calcular el centro del conjunto de objetos
+    calculateObjectsCenter();
+    updateCameraPosition();
+}
 
 function create3DObject(data, position) {
     const type = data.Tipo;

@@ -1,0 +1,103 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.json-tree {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.json-node {
+    margin: 0.25rem 0;
+    padding-left: 1rem;
+}
+
+.json-key {
+    color: #0066cc;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}
+
+.json-key:hover {
+    background-color: #e3f2fd;
+    border-radius: 3px;
+}
+
+.json-value {
+    color: #006600;
+    margin-left: 0.5rem;
+}
+
+.json-string {
+    color: #cc6600;
+}
+
+.json-number {
+    color: #0066cc;
+}
+
+.json-children {
+    margin-left: 1rem;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 0.5rem;
+}
+
+.json-children.collapsed {
+    display: none;
+}
+
+.expand-icon {
+    margin-right: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.expand-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+#canvas-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0.5rem;
+    position: relative;
+    height: 500px;
+}
+
+#canvas-3d {
+    border-radius: 0.5rem;
+}
+
+.controls-panel {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.info-panel {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+textarea {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.btn-parse {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+}
+
+.btn-parse:hover {
+    background: linear-gradient(45deg, #5a6fd8, #6a4190);
+    color: white;
+}

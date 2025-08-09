@@ -517,7 +517,7 @@ function processObjectArray(dataArray) {
                 break;
             case 'Cubo':
                 // El radio de colisión es la mitad de la diagonal de la base del cubo.
-                const size = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Lago : 5;
+                const size = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Largo : 5;
                 objectRadius = Math.sqrt(size * size + size * size) / 2;
                 break;
             case 'Ortoedro':
@@ -534,7 +534,7 @@ function processObjectArray(dataArray) {
                 break;
             case 'Cuadrado':
                 // Igual que el cubo, pero para una forma plana.
-                const lado = objData.Lago || 5;
+                const lado = objData.Largo || 5;
                 objectRadius = Math.sqrt(lado * lado + lado * lado) / 2;
                 break;
             case 'Circulo':
@@ -649,9 +649,9 @@ function processObjectArray(dataArray) {
 */
 
 
-/*sol: ubicarlos sobre una circunsferencia en la que la separacion sobre uno de otro este basdada
+/*sol final: ubicarlos sobre una circunsferencia en la que la separacion sobre uno de otro este basdada
 en el mayor radio de envoltura de cada objeto
-*/
+
 function processObjectArray(dataArray) {
     // 1. Recorrer todos los objetos para calcular sus radios de envoltura
     const objectsWithRadius = dataArray.map(objData => {
@@ -722,6 +722,107 @@ function processObjectArray(dataArray) {
             }
         }
     }
+    
+    // Calcular el centro del conjunto de objetos
+    calculateObjectsCenter();
+    updateCameraPosition();
+}
+*/
+
+//sol final 2: //distribución en cuadrícula con separación basada en el radio de envoltura máximo
+function processObjectArray(dataArray) {
+    // 1. Recorrer todos los objetos para calcular sus radios de envoltura
+    const objectsWithRadius = dataArray.map(objData => {
+        let objectRadius;
+        
+        switch (objData.Tipo) {
+            case 'Cilindro':
+                objectRadius = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Radio : 2.5;
+                break;
+            case 'Cubo':
+                const size = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Largo : 5;
+                objectRadius = Math.sqrt(size * size + size * size) / 2;
+                break;
+            case 'Ortoedro':
+                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
+                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                objectRadius = Math.sqrt(width * width + depth * depth) / 2;
+                break;
+            case 'Rectangulo':
+                const rectLargo = objData.Largo || 5;
+                const rectAncho = objData.Ancho || 5;
+                objectRadius = Math.sqrt(rectLargo * rectLargo + rectAncho * rectAncho) / 2;
+                break;
+            case 'Cuadrado':
+                const lado = objData.Largo || 5;
+                objectRadius = Math.sqrt(lado * lado + lado * lado) / 2;
+                break;
+            case 'Circulo':
+                objectRadius = objData.Radio || 2.5;
+                break;
+            default:
+                objectRadius = 2.5;
+        }
+        
+        return { data: objData, radius: objectRadius };
+    });
+
+    // 2. Determinar el radio de envoltura máximo y la distancia de separación
+    const maxRadius = objectsWithRadius.reduce((max, obj) => Math.max(max, obj.radius), 0);
+    const padding = 2;
+    const separationDistance = (maxRadius * 2) + padding;
+
+    // --- CÁLCULO AUTOMÁTICO DE gridSize ---
+    // Estimar el lado del cuadrado que contendrá a todos los objetos
+    const numObjects = objectsWithRadius.length;
+    if (numObjects === 0) {
+        // No hay objetos para colocar, salir de la función
+        return;
+    }
+    // Calcular el número de columnas y filas necesarias para formar una cuadrícula cuadrada
+    const sideLength = Math.ceil(Math.sqrt(numObjects));
+    // El gridSize es la mitad del tamaño total del área de la cuadrícula
+    const autoGridSize = (sideLength * separationDistance) / 2 + separationDistance; 
+
+    // 3. Crear una matriz de puntos posibles usando el gridSize calculado
+    const gridPoints = [];
+    const startX = -autoGridSize;
+    const startZ = -autoGridSize;
+    const step = separationDistance;
+    
+    for (let x = startX; x <= autoGridSize; x += step) {
+        for (let z = startZ; z <= autoGridSize; z += step) {
+            gridPoints.push({ x, z });
+        }
+    }
+    
+    // Asegurarse de que haya suficientes puntos
+    if (gridPoints.length < numObjects) {
+        // En caso de que el cálculo falle por los redondeos, ajustar el gridSize
+        console.warn("Recalculando gridSize. Los objetos pueden quedar más cerca de los bordes.");
+        const newGridSize = autoGridSize + separationDistance;
+        gridPoints.length = 0; // Vaciar el array
+        for (let x = -newGridSize; x <= newGridSize; x += step) {
+            for (let z = -newGridSize; z <= newGridSize; z += step) {
+                gridPoints.push({ x, z });
+            }
+        }
+    }
+
+    // 4. Asignar objetos a los puntos de forma aleatoria
+    clearScene();
+    
+    const shuffledObjects = objectsWithRadius.sort(() => Math.random() - 0.5);
+    const shuffledGridPoints = gridPoints.sort(() => Math.random() - 0.5);
+
+    shuffledObjects.forEach((objData, index) => {
+        const position = shuffledGridPoints[index];
+        const obj = create3DObject(objData.data, { x: position.x, y: 0, z: position.z });
+        if (obj) {
+            objects.push(obj);
+            scene.add(obj);
+        }
+    });
     
     // Calcular el centro del conjunto de objetos
     calculateObjectsCenter();

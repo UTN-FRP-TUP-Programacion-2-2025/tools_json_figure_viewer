@@ -434,8 +434,8 @@ function processObjectArray(dataArray) {
             objectSize = objData.Tapas[0].Radio * 2;
         } else if (objData.Tipo === 'Cubo' && objData.Caras && objData.Caras[0]) {
             objectSize = objData.Caras[0].Largo;
-        } else if (objData.Tipo === 'Ortoedro' && objData.Tapas && objData.Tapas[0]) {
-            objectSize = Math.max(objData.Tapas[0].Largo, objData.Tapas[0].Ancho);
+        } else if (objData.Tipo === 'Ortoedro' && objData.Bases && objData.Bases[0]) {
+            objectSize = Math.max(objData.Bases[0].Largo, objData.Bases[0].Ancho);
         }
         
         const position = getRandomPosition(positions, objectSize);
@@ -471,7 +471,7 @@ function processObjectArray(dataArray) {
                 objectSize = (objData.Caras && objData.Caras[0]) ? objData.Caras[0].Largo : 5;
                 break;
             case 'Ortoedro':
-                objectSize = (objData.Tapas && objData.Tapas[0]) ? Math.max(objData.Tapas[0].Largo, objData.Tapas[0].Ancho) : 5;
+                objectSize = (objData.Bases && objData.Bases[0]) ? Math.max(objData.Bases[0].Largo, objData.Bases[0].Ancho) : 5;
                 break;
             case 'Rectangulo':
                 objectSize = objData.Largo ? Math.max(objData.Largo, objData.Ancho) : 5;
@@ -522,8 +522,8 @@ function processObjectArray(dataArray) {
                 break;
             case 'Ortoedro':
                 // El radio de colisión es la mitad de la diagonal de la base del ortoedro.
-                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
-                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                const width = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Largo : 5;
+                const depth = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Ancho : 5;
                 objectRadius = Math.sqrt(width * width + depth * depth) / 2;
                 break;
             case 'Rectangulo':
@@ -580,8 +580,8 @@ function processObjectArray(dataArray) {
                 objectRadius = Math.sqrt(size * size + size * size) / 2;
                 break;
             case 'Ortoedro':
-                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
-                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                const width = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Largo : 5;
+                const depth = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Ancho : 5;
                 objectRadius = Math.sqrt(width * width + depth * depth) / 2;
                 break;
             case 'Rectangulo':
@@ -666,8 +666,8 @@ function processObjectArray(dataArray) {
                 objectRadius = Math.sqrt(size * size + size * size) / 2;
                 break;
             case 'Ortoedro':
-                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
-                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                const width = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Largo : 5;
+                const depth = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Ancho : 5;
                 objectRadius = Math.sqrt(width * width + depth * depth) / 2;
                 break;
             case 'Rectangulo':
@@ -744,8 +744,8 @@ function processObjectArray(dataArray) {
                 objectRadius = Math.sqrt(size * size + size * size) / 2;
                 break;
             case 'Ortoedro':
-                const width = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Largo : 5;
-                const depth = (objData.Tapas && objData.Tapas[0]) ? objData.Tapas[0].Ancho : 5;
+                const width = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Largo : 5;
+                const depth = (objData.Bases && objData.Bases[0]) ? objData.Bases[0].Ancho : 5;
                 objectRadius = Math.sqrt(width * width + depth * depth) / 2;
                 break;
             case 'Rectangulo':
@@ -849,9 +849,9 @@ function create3DObject(data, position) {
             break;
             
         case 'Ortoedro':
-            if (data.Tapas && data.Tapas[0] && data.Laterales && data.Laterales[0]) {
-                const width = data.Tapas[0].Largo;
-                const depth = data.Tapas[0].Ancho;
+            if (data.Bases && data.Bases[0] && data.Laterales && data.Laterales[0]) {
+                const width = data.Bases[0].Largo;
+                const depth = data.Bases[0].Ancho;
                 const height = data.Laterales[0].Ancho;
                 return createOrtoedro(width, height, depth, position);
             }
